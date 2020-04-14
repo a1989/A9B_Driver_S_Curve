@@ -1,0 +1,68 @@
+---- printf Matches (77 in 10 files) ----
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 84 :  <LI><a href="#[3c]">fputc</a> from core_technology.o(i.fputc) referenced from printf5.o(i.__0printf$5)
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 424 : <BR>[Called By]<UL><LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_printf_core
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 563 : <LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 593 : <BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = CAN_SendData_Acquisition &rArr; SetByte_Bit &rArr; __2printf
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 708 : <LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 807 : <LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 884 : <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = HAL_CAN_ErrorCallback &rArr; __2printf
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 887 : <LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 1512 : <LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 1523 : <LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 1857 : <BR><BR>[Stack]<UL><LI>Max Depth = 64<LI>Call Chain = Send_Driver_To_Mian_Data &rArr; CAN_SendData_Acquisition &rArr; SetByte_Bit &rArr; __2printf
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 1868 : <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = SetByte_Bit &rArr; __2printf
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 1870 : <BR>[Calls]<UL><LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 2020 : <P><STRONG><a name="[11a]"></a>__0printf$5</STRONG> (Thumb, 22 bytes, Stack size 24 bytes, printf5.o(i.__0printf$5), UNUSED)
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 2021 : <BR><BR>[Calls]<UL><LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_printf_core
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 2024 : <P><STRONG><a name="[12f]"></a>__1printf$5</STRONG> (Thumb, 0 bytes, Stack size 24 bytes, printf5.o(i.__0printf$5), UNUSED)
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 2026 : <P><STRONG><a name="[6f]"></a>__2printf</STRONG> (Thumb, 0 bytes, Stack size 24 bytes, printf5.o(i.__0printf$5))
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 2027 : <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = __2printf
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 2049 : <BR>[Address Reference Count : 1]<UL><LI> printf5.o(i.__0printf$5)
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 2275 : <P><STRONG><a name="[11b]"></a>_printf_core</STRONG> (Thumb, 658 bytes, Stack size 104 bytes, printf5.o(i._printf_core), UNUSED)
+A9B_DRIVERBOARD.htm (MDK-ARM\A9B_DRIVERBOARD) line 2278 : <BR>[Called By]<UL><LI><a href="#[11a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__0printf$5
+I2C_EE_ByteWrite in at24c512.c (hwr1001\at24c512) :         printf ("\r\n read status:%d", status);
+I2C_EE_ByteRead in at24c512.c (hwr1001\at24c512) : 		printf ("\r\n read status:%d", status);
+EEP_I2C_Test in at24c512.c (hwr1001\at24c512) : 	printf ("\r\n rdata:%x", rdata);
+EEP_I2C_Test in at24c512.c (hwr1001\at24c512) : 	printf ("\r\n rdata:%x", rdata);
+EEP_I2C_Test in at24c512.c (hwr1001\at24c512) : 	printf ("\r\n rdata:%x", rdata);
+EEP_I2C_Test in at24c512.c (hwr1001\at24c512) : 	printf ("\r\n rdata:%x", rdata);
+BSP_Initializes in bsp.c (hwr1001) : 		printf ("\r\n hwrobot steper motor driver board bsp init is ok !");
+Driver_Board_Parameter_Init in control.c (hwr1001) : 	//printf ("\r\n 驱动器当前位置:%d ", eep_motor_location);
+Driver_Board_Parameter_Init in control.c (hwr1001) : 	printf ("\r\n 读取板卡设置参数");
+Driver_Board_Parameter_Init in control.c (hwr1001) : 	printf ("\r\n 驱动器ID:%x", driver_can_stdid);
+Driver_Board_Parameter_Init in control.c (hwr1001) : 	printf ("\r\n 驱动器当前位置:%d ", Location_Cnt);
+Driver_Board_Parameter_Init in control.c (hwr1001) : 	printf ("\r\n 当前数据地址：%d", location_addr);
+Driver_Board_Parameter_Init in control.c (hwr1001) : 	printf ("\r\n 驱动器电流:%2.3fA", drv_torque_value);
+Driver_Board_Parameter_Init in control.c (hwr1001) : 	printf ("\r\n 驱动器细分:%d", motor_step_value);
+Eep_Data_Update in control.c (hwr1001) : 		printf ("\r\n ID:0x%x current:%2.3fA step:%d ", ID, current, step);
+Eep_Data_Update in control.c (hwr1001) : 		printf ("\r\n parameters updada succees!......");
+Motor_Location_Write in control.c (hwr1001) : 			//printf ("\r\n 当前地址：%d", location_addr);
+Motor_Location_Write in control.c (hwr1001) : 			//printf ("\r\n 当前位置：%d", Location_Cnt_tmp);
+Ina201_ADC_Get in control.c (hwr1001) : 	//printf("\r\n ADC_Voltage_Value:%f",ADC_Voltage_Value);
+Ina201_ADC_Get in control.c (hwr1001) : 	//printf("\r\n ADC_Current_Value:%f",ADC_Current_Value);
+Ina201_ADC_Get in control.c (hwr1001) : 	//printf("\r\n ADC_Temperature_Value:%f",ADC_Temperature_Value);
+SetByte_Bit in core_technology.c (hwr1001) :         printf ("\r\n value error\r\n");
+Drv8711_Step_Set in drv8711.c (hwr1001\motor) : 	//printf ("\r\n %x", drv8711_ctrl_value);
+Drv8711_Reg_Read in drv8711.c (hwr1001\motor) :     printf ("\r\n CTRL:0x%x", value);
+Drv8711_Reg_Read in drv8711.c (hwr1001\motor) :     printf ("\r\n TORQUE:0x%x", value);
+Drv8711_Reg_Read in drv8711.c (hwr1001\motor) :     printf ("\r\n OFF:0x%x", value);
+Drv8711_Reg_Read in drv8711.c (hwr1001\motor) :     printf ("\r\n BLANK:0x%x", value);
+Drv8711_Reg_Read in drv8711.c (hwr1001\motor) :     printf ("\r\n DECAY:0x%x", value);
+Drv8711_Reg_Read in drv8711.c (hwr1001\motor) :     printf ("\r\n STALL:0x%x", value);
+Drv8711_Reg_Read in drv8711.c (hwr1001\motor) :     printf ("\r\n DRIVE:0x%x", value);
+Drv8711_Reg_Read in drv8711.c (hwr1001\motor) :     printf ("\r\n STATUS:0x%x", value);
+Get_Drv8711_Statu in drv8711.c (hwr1001\motor) :        printf ("\r\n STATUS:0x%x", value);
+Get_Drv8711_Statu in drv8711.c (hwr1001\motor) :            //printf ("\r\n A相过流 ");
+Get_Drv8711_Statu in drv8711.c (hwr1001\motor) :            //printf ("\r\n B相过流 ");
+Get_Drv8711_Statu in drv8711.c (hwr1001\motor) :            //printf ("\r\n 欠压锁定 ");
+Get_Drv8711_Statu in drv8711.c (hwr1001\motor) :            //printf ("\r\n 电机失速 ");
+HAL_UART_RxCpltCallback in interrupt.c (hwr1001) : 			//printf ("\r\n uart1_rxbuff: %s", uart1_rxbuff);
+HAL_UART_RxCpltCallback in interrupt.c (hwr1001) : 					//printf ("\r\n uart1_rdata: %s", i);
+HAL_UART_RxCpltCallback in interrupt.c (hwr1001) : 				// printf ("\r\n uart1_rdata: %x", PULLER_TO_CAR_DATA[4]);
+HAL_CAN_ErrorCallback in interrupt.c (hwr1001) : 	printf ("\r\nCAN出错\r\n");
+LED_Running in led.c (hwr1001) : 		//printf ("\r\n soft_reset_flag:%d", soft_reset_flag);
+assert_failed in main.c (Src) :        tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+Get_Motor_Statues in motor.c (hwr1001\motor) :     // sprintf((char*)aTxBuffer,"\r\n捕获值:%d 当前位置:%.2fmm 速度:%.1f mm/s",CaptureNumber,(float)(CaptureNumber*MPP),(float)SUM_Pulse*MPP);
+Get_Motor_Statues in motor.c (hwr1001\motor) :     // sprintf((char*)aTxBuffer+strlen((const char*)aTxBuffer),"\r\n1s内编码器计数值:%d",SUM_Pulse);
+Get_Motor_Statues in motor.c (hwr1001\motor) :     //printf ("\r\n 捕获值:%d 当前位置:%.2fmm 速度:%.1f mm/s", CaptureNumber, (float)(CaptureNumber * MPP), (float)SUM_Pulse * MPP);
+Get_Motor_Statues in motor.c (hwr1001\motor) :     //printf ("\r\n 输出脉冲个数: %d", StepMotor_Pulse_cnt);

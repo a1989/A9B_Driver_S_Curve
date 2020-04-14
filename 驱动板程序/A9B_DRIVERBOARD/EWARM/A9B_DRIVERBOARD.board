@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flash_board>
+    <pass>
+        <loader>$TOOLKIT_DIR$\config\flashloader\ST\FlashSTM32F10xx8.flash</loader>
+    </pass>
+</flash_board>
