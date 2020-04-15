@@ -5,6 +5,7 @@ void BSP_Initializes (void)
 {
 	if (bsp_init_flag == 0)
 	{
+		CurveBlockInit(&structCurveBlock);
 		//At24c512_Init();//初始化EEP
 		Driver_Board_Parameter_Init();//参数读取，必须放在最前面
 		Driver_Can_Init();//CAN滤波器初始化

@@ -74,6 +74,7 @@ static void MX_NVIC_Init(void);
   * @brief  The application entry point.
   * @retval int
   */
+extern float g_fSpeedExpect;
 int main(void)
 {
 	/* USER CODE BEGIN 1 */
@@ -108,7 +109,7 @@ int main(void)
 	MX_SPI2_Init();
 	MX_TIM1_Init();
 	MX_TIM4_Init();
-	MX_IWDG_Init();
+//	MX_IWDG_Init();
 	/* Initialize interrupts */
 	MX_NVIC_Init();
 	/* USER CODE BEGIN 2 */
@@ -121,9 +122,10 @@ int main(void)
 	while (1)
 	{
               if(i > 10000)
-              {	
+               {	
 //                  printf("\r\n %f,%d,%f", Dis_Target, Location_Cnt, Vel_Exp_Val);
 //                  printf("\r\n %d", Toggle_Pulse);
+									printf("\r\n%f,%d", Vel_Exp_Val, Location_Cnt);
                   i = 0;
               }
               else

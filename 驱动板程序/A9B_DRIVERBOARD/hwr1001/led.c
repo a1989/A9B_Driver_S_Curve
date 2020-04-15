@@ -31,7 +31,7 @@ void LED_Running(void)
 		led_display_cnt_flag = 0;
 		//printf ("\r\n soft_reset_flag:%d", soft_reset_flag);
 	}
-	Iwdg_Updata();
+//	Iwdg_Updata();
 	System_Control();
 //	Motor_Location_Write(); //写电机位置 zyg2019.11.8
 	Limit_Switch_Scanning();//按键扫描

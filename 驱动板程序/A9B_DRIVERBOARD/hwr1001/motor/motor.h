@@ -79,12 +79,30 @@ typedef struct
 		float fDecelerationDistance;
 		float fPlateauDistance;
 		float fLastPosition;
+		float fMoveDistance;
 		bool bRecalculated;
 		bool bPlateauAll;
+		bool bStop;
+		float iTimeTickAcc;
+		float iTimeTickDec;
+		uint32_t iEncoderTargetLocation;
+		uint32_t iEncoderStartLocation;
 }CurveParams;
-#define min(a, b) 	( ((a) < (b)) ? (a) : (b) )
-#define max(a, b)		( ((a) > (b)) ? (a) : (b) )
+//#define min(a, b) 	( ((a) < (b)) ? (a) : (b) )
+//#define max(a, b)		( ((a) > (b)) ? (a) : (b) )
+void CurveBlockReset(CurveParams *structParams);
+float CalculateCurve(CurveParams *structParams, float fSpeed, float fLocation, float fCurrentPosition);
 
+typedef struct
+{
+		CurveParams structParams;
+		void (*m_pCurveReset) (CurveParams *structParams);
+		float (*m_pCalcCurve) (CurveParams *structParams, float fSpeed, float fLocation, float fCurrentPosition);
+}CurveBlock;
+
+extern CurveBlock structCurveBlock;
+void CurveBlockInit(CurveBlock *structBlock);
+extern float g_fSpeedExpect;
 void STEPMOTOR_DIR_FORWARD (void);
 void STEPMOTOR_DIR_REVERSAL (void);
 

@@ -12,6 +12,7 @@ uint8_t motor_limit_cnt = 60;	//zyg 50
 uint8_t gCan_Receive_Flag = 0;
 
 extern EncoderType GetEncoder;
+extern s32 Location_Cnt;
 
 uint8_t Uart_Receive_Interrupt_Switch (UART_HandleTypeDef* huart, uint8_t* uart_receive_data)
 {
@@ -161,11 +162,24 @@ void HAL_CAN_RxCpltCallback (CAN_HandleTypeDef *hcan)
 void HAL_TIM_OC_DelayElapsedCallback (TIM_HandleTypeDef *htim)
 {
 	uint16_t count;
-
-	count=__HAL_TIM_GET_COUNTER (&StepMotor_TIM);
-	__HAL_TIM_SET_COMPARE (&StepMotor_TIM, TIM_CHANNEL_1, (uint16_t)(count + Toggle_Pulse));
-	tim_Pulse_count++;
-	StepMotor_Pulse_cnt = tim_Pulse_count / (motor_step_value * 2);
+	static int32_t iEncoderCount = MOTOR_MAXPLUS;
+	Encoder_Config();
+	Encoder_Total();
+	if( ((structCurveBlock.structParams.iEncoderStartLocation > structCurveBlock.structParams.iEncoderTargetLocation) 
+				&& (Location_Cnt <= structCurveBlock.structParams.iEncoderTargetLocation)) 	||
+			((structCurveBlock.structParams.iEncoderStartLocation < structCurveBlock.structParams.iEncoderTargetLocation)
+				&& (Location_Cnt >= structCurveBlock.structParams.iEncoderTargetLocation)))
+	{
+			HAL_TIM_OC_Stop_IT (&htim2, TIM_CHANNEL_1);
+			structCurveBlock.structParams.bStop = true;
+	}
+	else
+	{
+			count=__HAL_TIM_GET_COUNTER (&StepMotor_TIM);
+			__HAL_TIM_SET_COMPARE (&StepMotor_TIM, TIM_CHANNEL_1, (uint16_t)(count + Toggle_Pulse));
+	}
+//	tim_Pulse_count++;
+//	StepMotor_Pulse_cnt = tim_Pulse_count / (motor_step_value * 2);
 }
 
 void HAL_GPIO_EXTI_Callback (uint16_t GPIO_Pin)

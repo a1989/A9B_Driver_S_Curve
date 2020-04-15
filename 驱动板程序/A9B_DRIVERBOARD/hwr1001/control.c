@@ -86,11 +86,6 @@ void Iwdg_Updata (void)
 //	if ((iwdg_system_flag == 1) && (iwdg_motor_ctrl_flag == 1) && (driver_over_current_flag == 0))  //狗只对主程序进行监测，以免引起频繁复位 YanBing
         if (iwdg_system_flag == 1) 
 	{
-//                printf("\r\n %d", i);
-//                if(i++ > 1500)
-//                {
-//                    return;
-//                }
 		HAL_IWDG_Refresh (&hiwdg); // 200ms喂狗一次
 		iwdg_system_flag = 0;
 		iwdg_motor_ctrl_flag = 0;
@@ -279,6 +274,9 @@ void CAN_Receive_Data_Analysis (void) //CAN接收的数据解析,放在CAN接受
                         {
                             motor_speed = (MAIN_TO_DRIVER_DATA[7]); //速度赋值
                         }
+			structCurveBlock.m_pCurveReset(&structCurveBlock.structParams);
+			//structCurveBlock.structParams.bRecalculated = false;
+			structCurveBlock.structParams.fLastPosition = Location_Cnt;
 			gCan_Receive_Flag = 0;
 		}
 		if ((motor_limit_flag == 1) || (motor_limit_flag == 2))

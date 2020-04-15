@@ -29,10 +29,12 @@ extern EncoderType GetEncoder;
 float Vel_Exp_Val_tmp = 5;
 //float Vel_Exp_Val_tmp = 1;
 
-float	g_fNominalAcceleration = 3;	//期望的加速时的加速度
-float	g_fNominalDeceleration = -3;	//期望的减速时的加速度
-float g_fNominalStartSpeed = 20; //期望的初始速度
-float g_fNominalEndSpeed = 20;	//期望的停止速度
+float	g_fNominalAcceleration = 30 * 0.02;	//期望的加速时的加速度
+float	g_fNominalDeceleration = -30 * 0.02;	//期望的减速时的加速度
+float g_fNominalStartSpeed = 00; //期望的初始速度
+float g_fNominalEndSpeed = 00;	//期望的停止速度
+float g_fSpeedExpect = 0.0;
+CurveBlock structCurveBlock;
 //步进电机辅助输出脉冲计数器
 /* 私有类型定义 --------------------------------------------------------------*/
 typedef struct
@@ -113,147 +115,218 @@ void DevelopmentFramwork (void)
 	if (driver_board_enable_flag == 1)
 	{ 
 		HAL_TIM_OC_Stop_IT (&htim2, TIM_CHANNEL_1);
-		Encoder_Config();
-		Encoder_Total();
+//		Encoder_Config();
+//		Encoder_Total();
 		MotorSpeedLocatin_Set (Vel_Target, Dis_Target);
 	}
 	iwdg_motor_ctrl_flag = 1;
 }
 
-void CurveBlockReset(CurveParams structParams)
+void CurveBlockReset(CurveParams *structParams)
 {
-		structParams.bRecalculated = false;
-		structParams.bPlateauAll = false;
+		structParams->bRecalculated = false;
+		structParams->bPlateauAll = false;
+		structParams->iTimeTickAcc = 0;
+		structParams->iTimeTickDec = 0;
+		//printf("\r\nreset");
 }
 
-float CalculateCurve(CurveParams structParams, float fSpeed, float fLocation, float fCurrentPosition)
+float CalculateCurve(CurveParams *structParams, float fSpeed, float fLocation, float fCurrentPosition)
 {
 		static float fZoomFactor = 1; //加减速缩放系数
 		static float fSpeedExpect = 1.0; 
-
-		if(!structParams.bRecalculated)
+		
+//	printf("\r\nb:%d", structParams.bRecalculated);
+		if(!structParams->bRecalculated)
 		{
+				structParams->bStop = false;
+				structParams->iEncoderStartLocation = Location_Cnt;
+				structParams->iEncoderTargetLocation = fLocation;
+				//printf("\r\nstartcalc");
 				//步进电机初始速度以某个频率开始
-				structParams.fStartSpeed = g_fNominalStartSpeed;
+				structParams->fStartSpeed = g_fNominalStartSpeed;
 				//步进电机收尾速度以某个频率结束
-				structParams.fEndSpeed = g_fNominalEndSpeed;
+				structParams->fEndSpeed = g_fNominalEndSpeed;
 				//当S曲线使用梯形作为参考时使用的恒定加速度
-				structParams.fAccelerationAverage = g_fNominalAcceleration;
-				
-				if(fSpeed < min(structParams.fStartSpeed, structParams.fEndSpeed))
+				structParams->fAccelerationAverage = g_fNominalAcceleration;
+				structParams->fDecelerationAverage = g_fNominalDeceleration;
+			
+				if(fSpeed < min(structParams->fStartSpeed, structParams->fEndSpeed))
 				{
-						fSpeedExpect = min(structParams.fStartSpeed, structParams.fEndSpeed);
-						structParams.bPlateauAll = true;
+						fSpeedExpect = min(structParams->fStartSpeed, structParams->fEndSpeed);
+						structParams->bPlateauAll = true;
 				}
-				else if(fSpeed > min(structParams.fStartSpeed, structParams.fEndSpeed) && fSpeed < max(structParams.fStartSpeed, structParams.fEndSpeed))
+				else if(fSpeed > min(structParams->fStartSpeed, structParams->fEndSpeed) && fSpeed < max(structParams->fStartSpeed, structParams->fEndSpeed))
 				{
-						fSpeedExpect = max(structParams.fStartSpeed, structParams.fEndSpeed);
-						structParams.bPlateauAll = true;
+						fSpeedExpect = max(structParams->fStartSpeed, structParams->fEndSpeed);
+						structParams->bPlateauAll = true;
 				}
 				//给定速度大于起始速度且大于收尾速度时计算S曲线参数
-				else if(fSpeed > structParams.fStartSpeed && fSpeed > structParams.fEndSpeed)
+				else if(fSpeed > structParams->fStartSpeed && fSpeed > structParams->fEndSpeed)
 				{								
 						//先以梯形为参考
 						//计算加速段距离	(Vt ^ 2 - V0 ^ 2) / 2a = S, V0 = 0;
-						structParams.fAccelerationDistance = ( pow(fSpeed, 2) - pow(structParams.fStartSpeed, 2) ) / (2 * structParams.fAccelerationAverage);
+						structParams->fAccelerationDistance = ( pow(fSpeed, 2) - pow(structParams->fStartSpeed, 2) ) / (2 * structParams->fAccelerationAverage);
 						//计算减速段距离
-						structParams.fDecelerationDistance = ( pow(structParams.fEndSpeed, 2) - pow(fSpeed, 2)) / (2 * structParams.fDecelerationAverage);
+						structParams->fDecelerationDistance = ( pow(structParams->fEndSpeed, 2) - pow(fSpeed, 2)) / (2 * structParams->fDecelerationAverage);
 						
-						structParams.fMaxSpeed = fSpeed;
+						structParams->fMaxSpeed = fSpeed;
 						
+						structParams->fMoveDistance = fabs(fLocation - structParams->fLastPosition);
+					
 						//计算匀速段距离
-						structParams.fPlateauDistance = fabs(fLocation - structParams.fLastPosition) - structParams.fAccelerationDistance - structParams.fDecelerationDistance;
+						structParams->fPlateauDistance = structParams->fMoveDistance - structParams->fAccelerationDistance - structParams->fDecelerationDistance;
+					
+//								printf("\r\nas:%f", structParams->fAccelerationDistance);
+//								printf("\r\nds:%f", structParams->fDecelerationDistance);
+//								printf("\r\nps:%f", structParams->fPlateauDistance);
+					
 						//计算匀速段小于0				
-						if( structParams.fPlateauDistance < 0)
+						if( structParams->fPlateauDistance < 0)
 						{
 								//梯形退化为三角形
-								fZoomFactor = fabs(fLocation - structParams.fLastPosition) / ( structParams.fAccelerationDistance + structParams.fDecelerationDistance );
-								structParams.fAccelerationDistance = structParams.fAccelerationDistance * fZoomFactor;
-								structParams.fDecelerationDistance = structParams.fDecelerationDistance * fZoomFactor;
+								fZoomFactor = fabs(fLocation - structParams->fLastPosition) / ( structParams->fAccelerationDistance + structParams->fDecelerationDistance );
+								structParams->fAccelerationDistance = structParams->fAccelerationDistance * fZoomFactor;
+								structParams->fDecelerationDistance = structParams->fDecelerationDistance * fZoomFactor;
 								//重新计算所能达到的速度 Vt = sqrt( 2aS + V0 ^ 2)
-								structParams.fMaxSpeed = sqrt(2 * structParams.fAccelerationAverage * structParams.fAccelerationDistance + pow(structParams.fStartSpeed, 2));
-								if(structParams.fMaxSpeed < min(structParams.fStartSpeed, structParams.fEndSpeed))
+								structParams->fMaxSpeed = sqrt(2 * structParams->fAccelerationAverage * structParams->fAccelerationDistance + pow(structParams->fStartSpeed, 2));
+								if(structParams->fMaxSpeed < min(structParams->fStartSpeed, structParams->fEndSpeed))
 								{
-										fSpeed = min(structParams.fStartSpeed, structParams.fEndSpeed);
-										structParams.bPlateauAll = true;
+										fSpeed = min(structParams->fStartSpeed, structParams->fEndSpeed);
+										structParams->bPlateauAll = true;
 								}
 								else
 								{
-										structParams.fPlateauDistance = 0;
+										structParams->fPlateauDistance = 0;
 								}
 						}
 						
-						if(!structParams.bPlateauAll)
+						if(!structParams->bPlateauAll)
 						{
 								//根据公式 V = (Vmax - V0) / ( 1 + exp( -aX + b ) ) + V0 计算		
 								//加速段S曲线形状参数计算，为运算方便去掉起始速度的叠加
-								structParams.fCurveSpeedAcc = fSpeed - structParams.fStartSpeed;	
+								structParams->fCurveSpeedAcc = fSpeed - structParams->fStartSpeed;	
 								
 								//以Vcurve = V / ( 1 + exp(-aX + b) )计算参数
 								//先以a = 1来确定b, 在X = 0处, Vcurve应当是一个极小值, 设为0.01, exp(b) = V / 0.01 - 1
-								structParams.fTransTimeAxisAcc = log(structParams.fCurveSpeedAcc * 100 - 1);
+								structParams->fTransTimeAxisAcc = log(structParams->fCurveSpeedAcc * 10 - 1);
 								
 								//再根据梯形的加速度来确定a
 								//由于梯形加速度已经确定, 根据V = v0 + acc * t, v0 = 0, t = V / acc, 所以X = V / acc;
-								//在X = V / acc处, V基本与Vcurve相等, 也就是 exp( -a * V / acc + b)是一个极小值, 设为0.01
-								//exp( -a * V / acc + b) = 0.01, -a * V / acc + b = ln(0.01) = -4.605
-								//a = (4.605 + b) * acc / V
-								structParams.fFlexTimeAxisAcc = (4.605 + structParams.fTransTimeAxisAcc) * structParams.fAccelerationAverage / structParams.fCurveSpeedAcc;
+								//在X = V / (acc * 1 / TimTick)处, V基本与Vcurve相等, 也就是 exp( -a * V / (acc * 1 / TimTick) + b)是一个极小值, 设为0.01
+								//exp( -a * V / (acc * 1 / TimTick) + b) = 0.01, -a * V / (acc * 1 / TimTick) + b = ln(0.01) = -4.605
+								//a = (4.605 + b) * (acc * 1 / TimTick) / V
+								structParams->fFlexTimeAxisAcc = (2.303 + structParams->fTransTimeAxisAcc) * structParams->fAccelerationAverage * 50 / structParams->fCurveSpeedAcc;
 								
 								//减速段S曲线形状参数计算
 								//去掉停止速度叠加后的公式为 Vcurve = V / (1 + exp(aX - b - B)),B为叠加加速段和匀速段后的平移量
-								structParams.fCurveSpeedDec = fSpeed - structParams.fEndSpeed;
+								structParams->fCurveSpeedDec = fSpeed - structParams->fEndSpeed;
 								
 								//先忽略平移量且先设Vcurve = V / (1 + exp(aX + b)), 在X = 0处, Vcurve为一个极小值, 设为0.01, 则exp(b) = V / 0.01 - 1
-								structParams.fTransTimeAxisDec = log(structParams.fCurveSpeedDec * 100 - 1);
+								structParams->fTransTimeAxisDec = log(structParams->fCurveSpeedDec * 10 - 1);
 								//平移是个负数
-								structParams.fTransTimeAxisDec = structParams.fTransTimeAxisDec * -1;
+								structParams->fTransTimeAxisDec = structParams->fTransTimeAxisDec * -1;
 								//再根据梯形减速段的加速段来确定a
 								//V = v0 + dec * t, V = 0, t = - v0 / dec, 所以 X = -v0 / dec
-								//在 X = -v0 / dec处, Vcurve基本等于0, 设为0.01, 也就是 exp( a * (-v0 / dec) - b) = v0 / 0.01
-								//a = dec * (ln(v0 / 0.01) + b) / -v0
-								structParams.fFlexTimeAxisDec = structParams.fDecelerationAverage * ( log(fSpeed / 0.01) + structParams.fTransTimeAxisDec) / (-fSpeed);
+								//在 X = -v0 / (dec * 1 / TimeTick)处, Vcurve基本等于0, 设为0.01, 也就是 1 + exp( a * (-v0 / (dec * 1 / TimeTick)) + b) = v0 / 0.01
+								//a = (dec * 1 / TimeTick) * (ln(v0 / 0.01 - 1) - b) / -v0
+								structParams->fFlexTimeAxisDec = structParams->fDecelerationAverage * 50 * ( log(structParams->fCurveSpeedDec * 10 - 1) - structParams->fTransTimeAxisDec ) / (-structParams->fCurveSpeedDec);
 								
 								//至此S曲线段参数已全部确定
+								printf("\r\nas:%f", structParams->fAccelerationDistance);
+								printf("\r\nds:%f", structParams->fDecelerationDistance);
+								printf("\r\nps:%f", structParams->fPlateauDistance);
+								printf("\r\nfa:%f", structParams->fFlexTimeAxisAcc);
+								printf("\r\nta:%f", structParams->fTransTimeAxisAcc);
+								printf("\r\nfd:%f", structParams->fFlexTimeAxisDec);
+								printf("\r\ntd:%f", structParams->fTransTimeAxisDec);
+								//printf("\r\ne:%f", structParams->fCurveSpeedDec * 100 - 1);
 						}
 				}
 				else
 				{
-						fSpeedExpect = min(structParams.fStartSpeed, structParams.fEndSpeed);
-						structParams.bPlateauAll = true;
+						fSpeedExpect = min(structParams->fStartSpeed, structParams->fEndSpeed);
+						structParams->bPlateauAll = true;
 				}
 				
-				structParams.bRecalculated = true;
+				structParams->bRecalculated = true;
 		}
-		
+//		printf("\r\nt:%f", structParams->fCurveSpeedDec * 100 - 1);
 		//计算当前期望速度值,由位置来确定
-		if(structParams.bPlateauAll)
+		if(!structParams->bPlateauAll)
 		{
-				return fSpeedExpect;
-		}
-		else
-		{
-				//加速段
-				if(structParams.fAccelerationDistance - fCurrentPosition > 0.01)
+				//printf("\r\ncalc");
+				if(fLocation > structParams->fLastPosition)
 				{
-						
-				}
-				//匀速段
-				else if( (structParams.fAccelerationDistance - fCurrentPosition < 0.01) && (structParams.fAccelerationDistance + structParams.fPlateauDistance - fCurrentPosition > 0.01) )
-				{
-						
-				}
-				//减速段
-				else if( (structParams.fAccelerationDistance + structParams.fPlateauDistance - fCurrentPosition < 0.01) && 
-								(structParams.fAccelerationDistance + structParams.fPlateauDistance + structParams.fDecelerationDistance - fCurrentPosition > 0.01))
-				{
-						
-				}
+						//加速段
+						if(structParams->fAccelerationDistance - fCurrentPosition > 0.01)
+						{
+								fSpeedExpect = structParams->fCurveSpeedAcc / (1 + exp(-structParams->fFlexTimeAxisAcc * structParams->iTimeTickAcc + structParams->fTransTimeAxisAcc)) + structParams->fStartSpeed;
+								structParams->iTimeTickAcc += 0.02;
+						}
+						//匀速段
+						else if( (structParams->fAccelerationDistance - fCurrentPosition < 0.01) && (structParams->fAccelerationDistance + structParams->fPlateauDistance - fCurrentPosition > 0.01) )
+						{
+								fSpeedExpect = structParams->fMaxSpeed;
+						}
+						//减速段
+						else if( (structParams->fAccelerationDistance + structParams->fPlateauDistance - fCurrentPosition < 0.01) && 
+										(structParams->fMoveDistance - fCurrentPosition > 0.01))
+						{
+								fSpeedExpect = structParams->fCurveSpeedDec / (1 + exp(structParams->fFlexTimeAxisDec * structParams->iTimeTickDec + structParams->fTransTimeAxisDec)) + structParams->fEndSpeed;
+								structParams->iTimeTickDec += 0.02;
+						}
+						else
+						{
+								fSpeedExpect = 0;
+						}
+				}	
 				else
 				{
-						
+						//加速段
+						if(fCurrentPosition - structParams->fMoveDistance + structParams->fAccelerationDistance > 0.01)
+						{
+								fSpeedExpect = structParams->fCurveSpeedAcc / (1 + exp(-structParams->fFlexTimeAxisAcc * structParams->iTimeTickAcc + structParams->fTransTimeAxisAcc)) + structParams->fStartSpeed;
+								structParams->iTimeTickAcc += 0.02;
+								//printf("\r\nacc");
+						}
+						//匀速段
+						else if( (fCurrentPosition - structParams->fMoveDistance + structParams->fAccelerationDistance < 0.01) && 
+									(fCurrentPosition - structParams->fMoveDistance + structParams->fAccelerationDistance + structParams->fPlateauDistance > 0.01) )
+						{
+								fSpeedExpect = structParams->fMaxSpeed;
+						}
+						//减速段
+						else if( (fCurrentPosition - structParams->fMoveDistance + structParams->fAccelerationDistance + structParams->fPlateauDistance < 0.01) && 
+										(fCurrentPosition > 0.01))
+						{
+								fSpeedExpect = structParams->fCurveSpeedDec / (1 + exp(structParams->fFlexTimeAxisDec * structParams->iTimeTickDec + structParams->fTransTimeAxisDec)) + structParams->fEndSpeed;
+								structParams->iTimeTickDec += 0.02;
+								//printf("\r\ndec");
+						}
+						else
+						{
+								fSpeedExpect = 0;
+						}
 				}
 		}
+		
+		if(structParams->bStop)
+		{
+				fSpeedExpect = -1;
+		}
+		
+		structParams->fLastPosition = fCurrentPosition;
+//		printf("\r\n%f", fSpeedExpect);
+		return fSpeedExpect;
+}
+
+void CurveBlockInit(CurveBlock *structBlock)
+{
+		structBlock->structParams.bStop = true;
+		structBlock->m_pCurveReset = CurveBlockReset;
+		structBlock->m_pCalcCurve = CalculateCurve;
+		structBlock->m_pCurveReset(&structBlock->structParams);
 }
 
 void MotorSpeedLocatin_Set (float speed, float lacation)
@@ -279,21 +352,22 @@ void MotorSpeedLocatin_Set (float speed, float lacation)
     //对速度进行累计,得到1s内的脉冲数
     SUM_Pulse += MSF;
     //位置环PID计算,根据计算结果判断电机运动方向
-    Dis_Exp_Val = IncPIDCalc (Location_Cnt, lacation, &sPID);
-    Motion_Dir = Dis_Exp_Val < 0 ? CCW : CW;
-    Dis_Exp_Val = abs (Dis_Exp_Val);
-    if (Vel_Exp_Val_tmp <= 0)
-    {
-		STEPMOTOR_OUTPUT_DISABLE(); //速度为零直接停止
-    }
-    else
+//    Dis_Exp_Val = IncPIDCalc (Location_Cnt, lacation, &sPID);
+//    Motion_Dir = Dis_Exp_Val < 0 ? CCW : CW;
+		Motion_Dir = Location_Cnt < lacation ? CW : CCW;
+//    Dis_Exp_Val = abs (Dis_Exp_Val);
+//    if (Vel_Exp_Val_tmp <= 0)
+//    {
+//		STEPMOTOR_OUTPUT_DISABLE(); //速度为零直接停止
+//    }
+//    else
     {
         //位置环输出作为速度环的输入,需要限制位置环的输出不会超过速度环目标值
-        if (Dis_Exp_Val >= Vel_Exp_Val_tmp)
-        {
-            Dis_Exp_Val = Vel_Exp_Val_tmp;
-        }
-        Vel_Exp_Val += IncPIDCalc (MSF, Dis_Exp_Val, &vPID);
+//        if (Dis_Exp_Val >= Vel_Exp_Val_tmp)
+//        {
+//            Dis_Exp_Val = Vel_Exp_Val_tmp;
+//        }
+//        Vel_Exp_Val += IncPIDCalc (MSF, Dis_Exp_Val, &vPID);
 				
 				
 				
@@ -314,6 +388,15 @@ void MotorSpeedLocatin_Set (float speed, float lacation)
             Vel_Exp_Val = 1;
         }
         
+//				if(structCurveBlock.m_pCalcCurve == NULL)
+//				{
+//						printf("\r\nnull");
+//				}
+//				else
+				{
+//					g_fSpeedExpect = structCurveBlock.m_pCalcCurve(&structCurveBlock.structParams, speed, lacation, Location_Cnt);
+					Vel_Exp_Val = structCurveBlock.m_pCalcCurve(&structCurveBlock.structParams, speed, lacation, Location_Cnt);
+				}
 //        if(motor_limit_flag == 2)
 //        {
 //            if(Motion_Dir == CW)
