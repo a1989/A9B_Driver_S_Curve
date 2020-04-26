@@ -274,9 +274,6 @@ void CAN_Receive_Data_Analysis (void) //CAN接收的数据解析,放在CAN接受
                         {
                             motor_speed = (MAIN_TO_DRIVER_DATA[7]); //速度赋值
                         }
-			structCurveBlock.m_pCurveReset(&structCurveBlock.structParams);
-			//structCurveBlock.structParams.bRecalculated = false;
-			structCurveBlock.structParams.fLastPosition = Location_Cnt;
 			gCan_Receive_Flag = 0;
 		}
 		if ((motor_limit_flag == 1) || (motor_limit_flag == 2))
@@ -424,6 +421,9 @@ void Check_Location (void)
 			}
 		}
 		
+		structCurveBlock.m_pCurveReset(&structCurveBlock.structParams);
+		structCurveBlock.structParams.bRecalculated = false;
+		structCurveBlock.structParams.iEncoderStartLocation = Location_Cnt;
 	/*
 		if(abs(gCurrent_pos) >= abs(CaptureNumber)) //正方向
 		{

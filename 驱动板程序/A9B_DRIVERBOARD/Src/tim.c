@@ -60,6 +60,7 @@ void MX_TIM1_Init(void)
 
 }
 /* TIM2 init function */
+//72M ±÷”‘¥
 void MX_TIM2_Init(void)
 {
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
@@ -91,7 +92,7 @@ void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
-  sConfigOC.OCMode = TIM_OCMODE_PWM2; //TIM_OCMODE_TOGGLE;
+  sConfigOC.OCMode = TIM_OCMODE_TOGGLE;
   sConfigOC.Pulse = 65530;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;

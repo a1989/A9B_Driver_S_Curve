@@ -35,6 +35,8 @@
 #define FEEDBACK_CONST                        (SPR/ENCODER_SPR)   //编码器和步进电机驱动器的比值
 #define CCW                                   1
 #define CW                                    0
+
+#define TOGGLE_BUFFER_LEN											20
 /* 扩展变量 ------------------------------------------------------------------*/
 extern TIM_HandleTypeDef htimx_STEPMOTOR;
 
@@ -64,23 +66,45 @@ extern float Dis_Exp_Val;
 
 typedef struct
 {
-		float fStartSpeed;
-		float fEndSpeed;
-		float fTransTimeAxisAcc;
-		float fFlexTimeAxisAcc;
-		float fTransTimeAxisDec;
-		float fFlexTimeAxisDec;
+		double dStartSpeed;
+		double dEndSpeed;
+		double dInflectionSpeed;
+		double dJerk;
+		double dJerkPerPulse;
+		double dAccPerPulse;
+		double dDecPerPulse;
+		uint16_t iOC_Value;
+		uint8_t iAccTickCount;
+		uint8_t iDirection;
+		int32_t iStartLocation;
+		int32_t iCurrentLocation;
+		float fAccelerationDistance;
+		float fDecelerationDistance;
+		uint16_t arrAccDivisionTable[20][2];
+		uint16_t arrDecDivisionTable[20][2];
+		uint32_t iStepComplete;
+		uint8_t iAccStepIndex;
+		uint8_t iDecStepIndex;
+//		float fTransTimeAxisAcc;
+//		float fFlexTimeAxisAcc;
+//		float fTransTimeAxisDec;
+//		float fFlexTimeAxisDec;
 		float fMaxSpeed;
 		float fCurveSpeedAcc;
 		float fCurveSpeedDec;
-		float fAccelerationAverage;
-		float fAccelerationDistance;
-		float fDecelerationAverage;
-		float fDecelerationDistance;
+//		float fAccelerationAverage;		
+		uint32_t iEncoderAccDist;
+		uint32_t iEncoderAccInflectDist;
+//		float fDecelerationAverage;		
+		uint32_t iEncoderDecDist;
+		uint32_t iEncoderDecInflectDist;
 		float fPlateauDistance;
-		float fLastPosition;
+		uint32_t iEncoderPlatDist;
+		float fTargetPosition;
 		float fMoveDistance;
+		uint32_t iEncoderMoveDist;
 		bool bRecalculated;
+		bool bBusy;
 		bool bPlateauAll;
 		bool bStop;
 		float iTimeTickAcc;
@@ -91,13 +115,15 @@ typedef struct
 //#define min(a, b) 	( ((a) < (b)) ? (a) : (b) )
 //#define max(a, b)		( ((a) > (b)) ? (a) : (b) )
 void CurveBlockReset(CurveParams *structParams);
-float CalculateCurve(CurveParams *structParams, float fSpeed, float fLocation, float fCurrentPosition);
+void CalculateCurve(CurveParams *structParams, float fSpeed, float fLocation, float fCurrentPosition);
 
 typedef struct
 {
 		CurveParams structParams;
+		uint16_t m_ToggleAcc[TOGGLE_BUFFER_LEN];
+		uint16_t m_ToggleDec[TOGGLE_BUFFER_LEN];
 		void (*m_pCurveReset) (CurveParams *structParams);
-		float (*m_pCalcCurve) (CurveParams *structParams, float fSpeed, float fLocation, float fCurrentPosition);
+		void (*m_pCalcCurve) (CurveParams *structParams, float fSpeed, float fLocation, float fCurrentPosition);
 }CurveBlock;
 
 extern CurveBlock structCurveBlock;

@@ -162,21 +162,78 @@ void HAL_CAN_RxCpltCallback (CAN_HandleTypeDef *hcan)
 void HAL_TIM_OC_DelayElapsedCallback (TIM_HandleTypeDef *htim)
 {
 	uint16_t count;
-	static int32_t iEncoderCount = MOTOR_MAXPLUS;
+	static int32_t iLocationLast = 0;
+	int32_t iCurrentLocation;
+	static int32_t iStepCount = 0;;
 	Encoder_Config();
 	Encoder_Total();
-	if( ((structCurveBlock.structParams.iEncoderStartLocation > structCurveBlock.structParams.iEncoderTargetLocation) 
-				&& (Location_Cnt <= structCurveBlock.structParams.iEncoderTargetLocation)) 	||
-			((structCurveBlock.structParams.iEncoderStartLocation < structCurveBlock.structParams.iEncoderTargetLocation)
-				&& (Location_Cnt >= structCurveBlock.structParams.iEncoderTargetLocation)))
+	
+	//如果到达指定位置停止输出,正向为1,负向为0
+	if( ((structCurveBlock.structParams.iDirection == 1) 
+				&& (Location_Cnt >= structCurveBlock.structParams.iEncoderTargetLocation)) 	||
+			((structCurveBlock.structParams.iDirection == 0)
+				&& (Location_Cnt <= structCurveBlock.structParams.iEncoderTargetLocation)))
 	{
 			HAL_TIM_OC_Stop_IT (&htim2, TIM_CHANNEL_1);
+			//设置停止标志位和忙标志
 			structCurveBlock.structParams.bStop = true;
+			structCurveBlock.structParams.bBusy = false;
+			//printf("\r\nstop");
 	}
 	else
 	{
+			if(structCurveBlock.structParams.iDirection == 1)
+			{
+					iCurrentLocation = Location_Cnt - structCurveBlock.structParams.iEncoderStartLocation;
+			}
+			else
+			{
+					//printf("\r\nneg");
+					//负方向时,为计算方便倒转计数
+					iCurrentLocation = structCurveBlock.structParams.iEncoderStartLocation - Location_Cnt;
+			}
+			structCurveBlock.structParams.iCurrentLocation = iCurrentLocation;
+			
+			//加速段
+			if(iCurrentLocation < structCurveBlock.structParams.iEncoderAccDist)
+			{
+					structCurveBlock.structParams.iStepComplete += structCurveBlock.structParams.arrAccDivisionTable[structCurveBlock.structParams.iAccStepIndex][1];
+					if(structCurveBlock.structParams.iStepComplete >= iCurrentLocation)
+					{
+							if(structCurveBlock.structParams.iAccStepIndex > 19)
+							{
+									structCurveBlock.structParams.iAccStepIndex = 19;
+							}
+							else
+							{
+									structCurveBlock.structParams.iAccStepIndex++;
+							}
+//							printf("\r\n%d", structCurveBlock.structParams.iAccStepIndex);
+					}
+					structCurveBlock.structParams.iOC_Value = structCurveBlock.structParams.arrAccDivisionTable[structCurveBlock.structParams.iAccStepIndex][0];
+					//printf("\r\nt:%d", structCurveBlock.structParams.iOC_Value);
+			}
+			//匀速段
+			else if( (iCurrentLocation >= structCurveBlock.structParams.iEncoderAccDist) && (iCurrentLocation < (structCurveBlock.structParams.iEncoderAccDist + structCurveBlock.structParams.iEncoderPlatDist)) )
+			{
+					//printf("\r\nplt");
+			}
+			//减速段
+			else if( iCurrentLocation >= (structCurveBlock.structParams.iEncoderAccDist + structCurveBlock.structParams.iEncoderPlatDist))
+			{
+					//printf("\r\ndec");
+			}
+			else
+			{
+					//printf("\r\nels");
+			}	
+			//Toggle_Pulse = (FREQ_UINT / (int)(fAccelaration * structCurveBlock.structParams.iAccTickCount * FEEDBACK_CONST)) >> 1;
+			
+			Toggle_Pulse = structCurveBlock.structParams.iOC_Value;
+			
 			count=__HAL_TIM_GET_COUNTER (&StepMotor_TIM);
 			__HAL_TIM_SET_COMPARE (&StepMotor_TIM, TIM_CHANNEL_1, (uint16_t)(count + Toggle_Pulse));
+						
 	}
 //	tim_Pulse_count++;
 //	StepMotor_Pulse_cnt = tim_Pulse_count / (motor_step_value * 2);
