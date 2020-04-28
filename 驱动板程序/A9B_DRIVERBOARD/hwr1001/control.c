@@ -395,8 +395,7 @@ void Check_Location (void)
 	gNew_pos = Aim_Location;
 	if(gCurrent_pos != gNew_pos)
 	{
-		if(gNew_pos > gCurrent_pos)	//正方向
-                
+		if(gNew_pos > gCurrent_pos)	//正方向               
 		{
 			if(gCurrent_pos < CaptureNumber)
 			{
@@ -421,9 +420,7 @@ void Check_Location (void)
 			}
 		}
 		
-		structCurveBlock.m_pCurveReset(&structCurveBlock.structParams);
-		structCurveBlock.structParams.bRecalculated = false;
-		structCurveBlock.structParams.iEncoderStartLocation = Location_Cnt;
+		structCurveBlock.m_pCurvePrepare(&structCurveBlock.structParams);
 	/*
 		if(abs(gCurrent_pos) >= abs(CaptureNumber)) //正方向
 		{

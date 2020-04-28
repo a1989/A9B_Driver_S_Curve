@@ -4,11 +4,12 @@
 #include "stm32f1xx.h"
 #include "stm32f1xx_hal.h"
 #include <stdbool.h>
+#include <stdlib.h>
 /* 私有宏定义 ----------------------------------------------------------------*/
 #define SAMPLING                    0x01    // 采样标记
 #define TXD                         0x02    // 发送数据标记
 #define MAX_SPEED                   200
-#define abs(x)    ((x)<0?(-x):(x))
+//#define abs(x)    ((x)<0?(-x):(x))
 #define SENDBUFF_SIZE               100     // 串口DMA发送缓冲区大小
 
 // 定义定时器预分频，定时器实际时钟频率为：72MHz/（STEPMOTOR_TIMx_PRESCALER+1）
@@ -66,64 +67,87 @@ extern float Dis_Exp_Val;
 
 typedef struct
 {
-		double dStartSpeed;
-		double dEndSpeed;
-		double dInflectionSpeed;
+		//起始速度
+		uint8_t iStartSpeed;
+		//收尾速度
+		uint8_t iEndSpeed;
+		//急动度
 		double dJerk;
-		double dJerkPerPulse;
-		double dAccPerPulse;
-		double dDecPerPulse;
+		//TIM比较输出值
 		uint16_t iOC_Value;
-		uint8_t iAccTickCount;
+		//运动方向
 		uint8_t iDirection;
-		int32_t iStartLocation;
-		int32_t iCurrentLocation;
+		//当前所走距离计数
+		int32_t iCurrentStepCount;
+		int32_t iLastStepCount;
+		//加速段距离
 		float fAccelerationDistance;
+		//减速段距离
 		float fDecelerationDistance;
+		//运动距离
+		float fMoveDistance;		
+		//重计算曲线
+		bool bRecalculated;
+		//运动块正忙标志
+		bool bBusy;
+		//全程匀速运动标志
+		bool bPlateauAll;
+		//停止标志
+		bool bStop;
+	
+		//加速段距离-OC值表
 		uint16_t arrAccDivisionTable[20][2];
+		//减速段距离-OC值表
 		uint16_t arrDecDivisionTable[20][2];
-		uint32_t iStepComplete;
+		//加速段表中距离累加值
+		uint32_t iAccStepComplete;
+		//减速段表中距离累加值
+		uint32_t iDecStepComplete;
+		//加速段表索引值
 		uint8_t iAccStepIndex;
+		//减速段表索引值
 		uint8_t iDecStepIndex;
+		
+		//加速段需要加上表中的距离值
+		bool bAccAddStep;
+		//减速段需要加上表中的距离值
+		bool bDecAddStep;
+		//最大速度
+		uint16_t iMaxSpeed;
+		//加速段编码器距离
+		uint32_t iEncoderAccDist;
+		//减速段编码器距离
+		uint32_t iEncoderDecDist;
+		//
+		float fPlateauDistance;
+		uint32_t iEncoderPlatDist;
+		int32_t iEncoderTargetLocation;
+		int32_t iEncoderStartLocation;
+		uint32_t iEncoderMoveDist;
 //		float fTransTimeAxisAcc;
 //		float fFlexTimeAxisAcc;
 //		float fTransTimeAxisDec;
 //		float fFlexTimeAxisDec;
-		float fMaxSpeed;
-		float fCurveSpeedAcc;
-		float fCurveSpeedDec;
 //		float fAccelerationAverage;		
-		uint32_t iEncoderAccDist;
-		uint32_t iEncoderAccInflectDist;
 //		float fDecelerationAverage;		
-		uint32_t iEncoderDecDist;
-		uint32_t iEncoderDecInflectDist;
-		float fPlateauDistance;
-		uint32_t iEncoderPlatDist;
-		float fTargetPosition;
-		float fMoveDistance;
-		uint32_t iEncoderMoveDist;
-		bool bRecalculated;
-		bool bBusy;
-		bool bPlateauAll;
-		bool bStop;
-		float iTimeTickAcc;
-		float iTimeTickDec;
-		uint32_t iEncoderTargetLocation;
-		uint32_t iEncoderStartLocation;
+//		float fTargetPosition;
+//		float iTimeTickAcc;
+//		float iTimeTickDec;
 }CurveParams;
+
 //#define min(a, b) 	( ((a) < (b)) ? (a) : (b) )
 //#define max(a, b)		( ((a) > (b)) ? (a) : (b) )
-void CurveBlockReset(CurveParams *structParams);
-void CalculateCurve(CurveParams *structParams, float fSpeed, float fLocation, float fCurrentPosition);
+void CurveBlockPrepare(CurveParams *structParams);
+void CalculateCurve(CurveParams *structParams, uint16_t iSpeed, int32_t iTargetLocation);
 
 typedef struct
 {
 		CurveParams structParams;
 		uint16_t m_ToggleAcc[TOGGLE_BUFFER_LEN];
 		uint16_t m_ToggleDec[TOGGLE_BUFFER_LEN];
-		void (*m_pCurveReset) (CurveParams *structParams);
-		void (*m_pCalcCurve) (CurveParams *structParams, float fSpeed, float fLocation, float fCurrentPosition);
+		void (*m_pCurvePrepare) (CurveParams *structParams);
+		void (*m_pCalcCurve) (CurveParams *structParams, uint16_t iSpeed, int32_t iTargetLocation);
+		void (*m_pStop) (CurveParams *structParams);
 }CurveBlock;
 
 extern CurveBlock structCurveBlock;
