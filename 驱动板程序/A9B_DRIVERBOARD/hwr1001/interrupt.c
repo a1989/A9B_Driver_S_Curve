@@ -163,7 +163,6 @@ void HAL_TIM_OC_DelayElapsedCallback (TIM_HandleTypeDef *htim)
 {
 	uint16_t count;
 //	int32_t iCurrentLocation;
-
 	Encoder_Config();
 	Encoder_Total();
 	
@@ -195,14 +194,15 @@ void HAL_TIM_OC_DelayElapsedCallback (TIM_HandleTypeDef *htim)
 //			structCurveBlock.structParams.iCurrentStepCount = iCurrentLocation;
 			
 			//加速段
-			if(structCurveBlock.structParams.iCurrentStepCount < structCurveBlock.structParams.iEncoderAccDist)
+			if(structCurveBlock.structParams.iCurrentStepCount < (int32_t)structCurveBlock.structParams.iEncoderAccDist)
 			{
 					if(structCurveBlock.structParams.bAccAddStep)
 					{				
 							structCurveBlock.structParams.iAccStepComplete += structCurveBlock.structParams.arrAccDivisionTable[structCurveBlock.structParams.iAccStepIndex][1];							
 							structCurveBlock.structParams.bAccAddStep = false;
 					}
-					if(structCurveBlock.structParams.iAccStepComplete >= structCurveBlock.structParams.iCurrentStepCount)
+					
+					if((int32_t)structCurveBlock.structParams.iAccStepComplete >= structCurveBlock.structParams.iCurrentStepCount)
 					{							
 
 					}
@@ -219,19 +219,23 @@ void HAL_TIM_OC_DelayElapsedCallback (TIM_HandleTypeDef *htim)
 					structCurveBlock.structParams.iOC_Value = structCurveBlock.structParams.arrAccDivisionTable[structCurveBlock.structParams.iAccStepIndex][0];
 			}
 			//匀速段
-			else if( (structCurveBlock.structParams.iCurrentStepCount >= structCurveBlock.structParams.iEncoderAccDist) && (structCurveBlock.structParams.iCurrentStepCount < (structCurveBlock.structParams.iEncoderAccDist + structCurveBlock.structParams.iEncoderPlatDist)) )
+			else if( (structCurveBlock.structParams.iCurrentStepCount >= (int32_t)(structCurveBlock.structParams.iEncoderAccDist))
+						&& (structCurveBlock.structParams.iCurrentStepCount < (int32_t)(structCurveBlock.structParams.iEncoderAccDist + structCurveBlock.structParams.iEncoderPlatDist)) )
 			{
 					//printf("\r\nplt");
 			}
 			//减速段
-			else if( structCurveBlock.structParams.iCurrentStepCount >= (structCurveBlock.structParams.iEncoderAccDist + structCurveBlock.structParams.iEncoderPlatDist))
+			else if( structCurveBlock.structParams.iCurrentStepCount >= (int32_t)(structCurveBlock.structParams.iEncoderAccDist + structCurveBlock.structParams.iEncoderPlatDist))
 			{
+//					printf("\r\ndec");
 					if(structCurveBlock.structParams.bDecAddStep)
 					{
+//							printf("\r\ndec");
 							structCurveBlock.structParams.iDecStepComplete += structCurveBlock.structParams.arrDecDivisionTable[structCurveBlock.structParams.iDecStepIndex][1];
-							structCurveBlock.structParams.bAccAddStep = false;
+							structCurveBlock.structParams.bDecAddStep = false;
 					}
-					if(structCurveBlock.structParams.iDecStepComplete >= structCurveBlock.structParams.iCurrentStepCount)
+					
+					if((int32_t)structCurveBlock.structParams.iDecStepComplete <= structCurveBlock.structParams.iCurrentStepCount)
 					{
 							if(structCurveBlock.structParams.iDecStepIndex > 19)
 							{
@@ -242,6 +246,15 @@ void HAL_TIM_OC_DelayElapsedCallback (TIM_HandleTypeDef *htim)
 									structCurveBlock.structParams.iDecStepIndex++;
 							}
 							structCurveBlock.structParams.bDecAddStep = true;
+					}
+					else
+					{
+//							structCurveBlock.structParams.iDecStepIndex++;
+//							if(structCurveBlock.structParams.iDecStepIndex > 19)
+//							{
+//									structCurveBlock.structParams.iDecStepIndex = 19;
+//							}							
+//							structCurveBlock.structParams.bDecAddStep = true;
 					}
 					structCurveBlock.structParams.iOC_Value = structCurveBlock.structParams.arrDecDivisionTable[structCurveBlock.structParams.iDecStepIndex][0];
 			}

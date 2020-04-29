@@ -161,6 +161,7 @@ void CurveBlockPrepare(CurveParams *structParams)
 		structParams->iAccStepIndex = 0;
 		structParams->iDecStepIndex = 0;
 		structParams->bAccAddStep = true;
+		structParams->bDecAddStep = true;
 		structParams->iLastStepCount = 0;
 		//printf("\r\nreset");
 }
@@ -212,6 +213,7 @@ void CalculateCurve(CurveParams *structParams, uint16_t iSpeed, int32_t iTargetL
 		}
 		if(!structParams->bRecalculated)
 		{
+				structParams->bBusy = true;
 				structParams->bStop = false;
 				structParams->iEncoderStartLocation = Location_Cnt;
 				structParams->iEncoderTargetLocation = iTargetLocation;
@@ -300,13 +302,14 @@ void CalculateCurve(CurveParams *structParams, uint16_t iSpeed, int32_t iTargetL
 								}
 								
 								fCurveMultipleDec = (float)(structParams->iMaxSpeed - structParams->iEndSpeed) / 10000;
+								printf("\r\n---");
 								
 								for(i = 0; i < ACC_TIME_DIVISION; i++)
 								{
 										structParams->arrDecDivisionTable[ACC_TIME_DIVISION - i - 1][0] = (uint16_t)((float)2000000 / ((fZoomFactorDec * (float)arrSpeedTable[i][0] * fCurveMultipleDec + structParams->iEndSpeed) * 2));
 										structParams->arrDecDivisionTable[ACC_TIME_DIVISION - i - 1][1] = (uint16_t)((float)arrSpeedTable[i][0] * fTimeTickDec);
 										structParams->arrDecDivisionTable[ACC_TIME_DIVISION - i - 1][0] = (uint16_t) ((float)structParams->arrDecDivisionTable[ACC_TIME_DIVISION - i - 1][0] / FEEDBACK_CONST);
-										printf("\r\n%d,%d", structParams->arrDecDivisionTable[i][0], structParams->arrDecDivisionTable[i][1]);
+										printf("\r\n%d,%d", structParams->arrDecDivisionTable[ACC_TIME_DIVISION - i - 1][0], structParams->arrDecDivisionTable[ACC_TIME_DIVISION - i - 1][1]);
 								}
 //								printf("\r\nspd:%f", fSpeed);
 								printf("\r\nps:%d", structParams->iEncoderPlatDist);
@@ -362,7 +365,7 @@ void CalculateCurve(CurveParams *structParams, uint16_t iSpeed, int32_t iTargetL
 				}
 				
 				structParams->bRecalculated = true;
-				structParams->bBusy = true;
+				
 				structParams->bAccAddStep = true;
 				structParams->bDecAddStep = true;
 				structParams->iDecStepComplete = structParams->iEncoderAccDist + structParams->iEncoderPlatDist;

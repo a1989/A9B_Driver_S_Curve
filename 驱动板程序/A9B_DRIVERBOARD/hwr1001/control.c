@@ -266,14 +266,14 @@ void CAN_Receive_Data_Analysis (void) //CAN接收的数据解析,放在CAN接受
 				Aim_Location = -12000000;
 			}
                         
-                        if((Aim_Location != 0) && (MAIN_TO_DRIVER_DATA[7] <= 10) )
-                        {
-                            motor_speed = 10;
-                        }
-                        else
-                        {
-                            motor_speed = (MAIN_TO_DRIVER_DATA[7]); //速度赋值
-                        }
+			if((Aim_Location != 0) && (MAIN_TO_DRIVER_DATA[7] <= 10) )
+			{
+					motor_speed = 10;
+			}
+			else
+			{
+					motor_speed = (MAIN_TO_DRIVER_DATA[7]); //速度赋值
+			}
 			gCan_Receive_Flag = 0;
 		}
 		if ((motor_limit_flag == 1) || (motor_limit_flag == 2))

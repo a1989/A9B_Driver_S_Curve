@@ -126,8 +126,8 @@ int main(void)
 //                  printf("\r\n %f,%d,%f", Dis_Target, Location_Cnt, Vel_Exp_Val);
 //                  printf("\r\n %d", Toggle_Pulse);
 //									printf("\r\n%d,%d,%d,%d,%d", Location_Cnt, structCurveBlock.structParams.iOC_Value, structCurveBlock.structParams.iCurrentLocation, structCurveBlock.structParams.iAccStepIndex, structCurveBlock.structParams.iAccStepComplete);
-//									printf("\r\n%d", Location_Cnt);
-									printf("\r\n%d,%d", Location_Cnt, MSF);
+//									printf("\r\n%d,%d", Location_Cnt, MSF);
+									printf("\r\n%d,%d,%d", Location_Cnt, MSF, structCurveBlock.structParams.iDecStepComplete);
                   i = 0;
               }
               else
